@@ -1,11 +1,11 @@
 import CredentialsProvider from "next-auth/providers/credentials";
-import NextAuth from "next-auth";
+import NextAuth, { AuthOptions } from "next-auth";
 import { MongoClient } from "mongodb";
 import bcrypt from "bcryptjs";
 
 const client = new MongoClient(process.env.MONGODB_URI!);
 
-const handler = NextAuth({
+export const authOptions: AuthOptions = {
     providers: [
         CredentialsProvider({
             name: "Credentials",
@@ -45,11 +45,29 @@ const handler = NextAuth({
             }
         })
     ],
-    session: { strategy: "jwt" },
+    session: { strategy: "jwt" as const },
     secret: process.env.NEXTAUTH_SECRET,
     pages: {
         signIn: '/login',
     },
-});
+    callbacks: {
+        async jwt({ token, user }: any) {
+            if (user) {
+                token.id = user.id;
+                token.email = user.email;
+            }
+            return token;
+        },
+        async session({ session, token }: any) {
+            if (token) {
+                session.user.id = token.id;
+                session.user.email = token.email;
+            }
+            return session;
+        }
+    }
+};
+
+const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST };

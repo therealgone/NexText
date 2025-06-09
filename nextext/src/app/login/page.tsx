@@ -10,11 +10,13 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setSuccess("");
     setIsLoading(true);
 
     try {
@@ -25,9 +27,12 @@ export default function LoginPage() {
       });
 
       if (res?.error) {
-        setError(res.error);
+        setError("Login Failed: " + res.error);
       } else if (res?.ok) {
-        router.push("/dashboard");
+        setSuccess("Login Successful!");
+        // Clear form
+        setEmail("");
+        setPassword("");
       }
     } catch (err) {
       setError("An error occurred during login");
@@ -44,7 +49,8 @@ export default function LoginPage() {
         className="bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-md space-y-6"
       >
         <h2 className="text-2xl font-bold">Login to NexText</h2>
-        {error && <p className="text-red-500">{error}</p>}
+        {error && <p className="text-red-500 bg-red-900/50 p-3 rounded">{error}</p>}
+        {success && <p className="text-green-500 bg-green-900/50 p-3 rounded">{success}</p>}
         <input
           type="email"
           placeholder="Email"
