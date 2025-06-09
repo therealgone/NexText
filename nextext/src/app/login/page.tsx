@@ -10,19 +10,30 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await signIn("credentials", {
-      redirect: false,
-      email,
-      password,
-    });
+    setError("");
+    setIsLoading(true);
 
-    if (res?.error) {
-      setError("Invalid email or password");
-    } else {
-      router.push("/dashboard"); // or wherever you want to go after login
+    try {
+      const res = await signIn("credentials", {
+        redirect: false,
+        email,
+        password,
+      });
+
+      if (res?.error) {
+        setError(res.error);
+      } else if (res?.ok) {
+        router.push("/dashboard");
+      }
+    } catch (err) {
+      setError("An error occurred during login");
+      console.error("Login error:", err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -40,6 +51,7 @@ export default function LoginPage() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           className="w-full p-3 rounded bg-gray-700 focus:outline-none"
+          required
         />
         <input
           type="password"
@@ -47,15 +59,17 @@ export default function LoginPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           className="w-full p-3 rounded bg-gray-700 focus:outline-none"
+          required
         />
         <button
           type="submit"
-          className="w-full p-3 bg-blue-600 hover:bg-blue-700 rounded text-white font-semibold"
+          className="w-full p-3 bg-blue-600 hover:bg-blue-700 rounded text-white font-semibold disabled:opacity-50"
+          disabled={isLoading}
         >
-          Log In
+          {isLoading ? "Logging in..." : "Log In"}
         </button>
         <p className="text-sm text-gray-400 text-center">
-          Don’t have an account?{" "}
+          Don't have an account?{" "}
           <a href="/signup" className="text-green-400">
             Sign up
           </a>
