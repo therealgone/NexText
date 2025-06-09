@@ -32,7 +32,7 @@ export default function LoginPage() {
         onSubmit={handleSubmit}
         className="bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-md space-y-6"
       >
-        <h2 className="text-2xl font-bold">Login to NexTxt</h2>
+        <h2 className="text-2xl font-bold">Login to NexText</h2>
         {error && <p className="text-red-500">{error}</p>}
         <input
           type="email"
