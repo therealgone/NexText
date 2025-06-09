@@ -30,6 +30,7 @@ export default function LoginPage() {
         setError("Login Failed: " + res.error);
       } else if (res?.ok) {
         setSuccess("Login Successful!");
+        router.push("/dashboard");
         // Clear form
         setEmail("");
         setPassword("");
