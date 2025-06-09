@@ -4,8 +4,14 @@
 import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { getServerSession } from "next-auth";
+import { authOptions } from "../api/auth/[...nextauth]/auth";
+import { redirect } from "next/navigation";
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  const session = await getServerSession(authOptions);
+  if (session) redirect("/chat");
+
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,10 +36,11 @@ export default function LoginPage() {
         setError("Login Failed: " + res.error);
       } else if (res?.ok) {
         setSuccess("Login Successful!");
-        router.push("/dashboard");
         // Clear form
         setEmail("");
         setPassword("");
+        // Redirect to chat after successful login
+        router.push("/chat");
       }
     } catch (err) {
       setError("An error occurred during login");
