@@ -4,6 +4,7 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import LogoutButton from "@/components/LogoutButton";
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -25,6 +26,7 @@ export default function DashboardPage() {
         <h1 className="text-3xl font-bold mb-4">Welcome to NexText</h1>
         <p className="text-lg">Logged in as: {session?.user?.email}</p>
       </div>
+       <LogoutButton /> 
     </div>
   );
 }

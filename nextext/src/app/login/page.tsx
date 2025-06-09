@@ -4,25 +4,17 @@
 import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../api/auth/[...nextauth]/auth";
-import { redirect } from "next/navigation";
 
-export default async function LoginPage() {
-  const session = await getServerSession(authOptions);
-  if (session) redirect("/chat");
-
+export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    setSuccess("");
     setIsLoading(true);
 
     try {
@@ -33,18 +25,12 @@ export default async function LoginPage() {
       });
 
       if (res?.error) {
-        setError("Login Failed: " + res.error);
+        setError(res.error);
       } else if (res?.ok) {
-        setSuccess("Login Successful!");
-        // Clear form
-        setEmail("");
-        setPassword("");
-        // Redirect to chat after successful login
-        router.push("/chat");
+        router.push("/dashboard");
       }
     } catch (err) {
       setError("An error occurred during login");
-      console.error("Login error:", err);
     } finally {
       setIsLoading(false);
     }
@@ -53,12 +39,11 @@ export default async function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
       <form
-        onSubmit={handleSubmit}
+        onSubmit={handleLogin}
         className="bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-md space-y-6"
       >
         <h2 className="text-2xl font-bold">Login to NexText</h2>
         {error && <p className="text-red-500 bg-red-900/50 p-3 rounded">{error}</p>}
-        {success && <p className="text-green-500 bg-green-900/50 p-3 rounded">{success}</p>}
         <input
           type="email"
           placeholder="Email"
@@ -84,7 +69,7 @@ export default async function LoginPage() {
         </button>
         <p className="text-sm text-gray-400 text-center">
           Don't have an account?{" "}
-          <a href="/signup" className="text-green-400">
+          <a href="/sign-up" className="text-green-400">
             Sign up
           </a>
         </p>

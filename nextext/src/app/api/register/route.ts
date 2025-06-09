@@ -3,13 +3,23 @@ import bcrypt from "bcryptjs";
 
 const client = new MongoClient(process.env.MONGODB_URI!);
 
+// Function to generate a random short code
+function generateShortCode() {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let result = '';
+    for (let i = 0; i < 6; i++) {
+        result += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    return result;
+}
+
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const {email, password} = body;
+        const { name, email, password } = body;
         
-        if(!email || !password) {
-            return new Response("Email and Password Required", {status: 400});
+        if(!email || !password || !name) {
+            return new Response("Name, Email and Password Required", {status: 400});
         }
 
         if (!process.env.MONGODB_URI) {
@@ -32,10 +42,14 @@ export async function POST(req: Request) {
         }
         
         const hashedpassword = await bcrypt.hash(password, 10);
+        const shortCode = generateShortCode();
         
         await db.collection("users").insertOne({
+            name,
             email,
             password: hashedpassword,
+            shortCode,
+            createdAt: new Date()
         });
         
         return new Response("User created successfully", {status: 201});
