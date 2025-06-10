@@ -1,169 +1,225 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
-import { useSession } from "next-auth/react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { use } from "react";
+import { useSession } from "next-auth/react";
 
 interface Message {
   _id: string;
   content: string;
-  sender: string;
-  createdAt: Date;
+  senderEmail: string;
+  createdAt: string;
+  conversationId: string;
 }
 
-export default function ChatPage({ params }: { params: Promise<{ id: string }> }) {
-  const { data: session } = useSession();
+export default function ChatPage({ params }: { params: { id: string } }) {
   const router = useRouter();
+  const { data: session } = useSession();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
+  const [otherParticipant, setOtherParticipant] = useState<{ name: string; email: string } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const lastMessageId = useRef<string | null>(null);
+  const lastMessageIdRef = useRef<string | null>(null);
+  const isFetchingRef = useRef(false);
 
-  // Unwrap params using React.use()
-  const { id } = use(params);
-
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  }, []);
 
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
+    if (isFetchingRef.current || !session?.user?.email) return;
+    isFetchingRef.current = true;
+
     try {
-      const response = await fetch(`/api/messages/${id}`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch messages");
+      const response = await fetch(`/api/messages/${params.id}`, {
+        cache: 'no-store'
+      });
+      
+      if (response.status === 404) {
+        router.push("/dashboard");
+        return;
       }
+      
+      if (!response.ok) throw new Error("Failed to fetch messages");
+      
       const data = await response.json();
       
-      // Only update if we have new messages
-      if (data.length > 0 && data[data.length - 1]._id !== lastMessageId.current) {
-        setMessages(data);
-        lastMessageId.current = data[data.length - 1]._id;
-        scrollToBottom();
+      if (data.length > 0) {
+        const lastMessage = data[data.length - 1];
+        if (lastMessageIdRef.current !== lastMessage._id) {
+          setMessages(data);
+          lastMessageIdRef.current = lastMessage._id;
+          scrollToBottom();
+        }
+      } else {
+        setMessages([]);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load messages");
+      console.error("Error fetching messages:", err);
+      setError("Failed to load messages");
     } finally {
+      isFetchingRef.current = false;
       setLoading(false);
     }
-  };
+  }, [params.id, router, session?.user?.email, scrollToBottom]);
+
+  const fetchConversationDetails = useCallback(async () => {
+    if (!session?.user?.email) return;
+    try {
+      const response = await fetch(`/api/conversations/${params.id}`);
+      if (!response.ok) throw new Error("Failed to fetch conversation details");
+      const data = await response.json();
+      const otherUser = data.participants.find(
+        (p: { email: string }) => p.email !== (session?.user as any)?.email
+      );
+      setOtherParticipant(otherUser);
+    } catch (err) {
+      console.error("Error fetching conversation details:", err);
+    }
+  }, [params.id, session?.user?.email]);
 
   useEffect(() => {
-    if (!session) {
-      router.push("/login");
-      return;
+    if (session?.user?.email) {
+      fetchMessages();
+      fetchConversationDetails();
+      const interval = setInterval(fetchMessages, 2000);
+      return () => clearInterval(interval);
     }
+  }, [fetchMessages, session?.user?.email, fetchConversationDetails]);
 
-    // Initial fetch
-    fetchMessages();
-
-    // Set up polling every 2 seconds
-    const pollInterval = setInterval(fetchMessages, 2000);
-
-    // Cleanup interval on unmount
-    return () => clearInterval(pollInterval);
-  }, [id, session, router]);
-
-  const sendMessage = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || !session?.user?.email) return;
 
     try {
-      const response = await fetch(`/api/messages/${id}`, {
+      const response = await fetch(`/api/messages/${params.id}`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ content: newMessage }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: newMessage.trim() }),
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to send message");
-      }
-
-      const sentMessage = await response.json();
-      setMessages((prev) => [...prev, sentMessage]);
+      if (!response.ok) throw new Error("Failed to send message");
+      
       setNewMessage("");
-      scrollToBottom();
+      fetchMessages();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to send message");
+      console.error("Error sending message:", err);
+      setError("Failed to send message");
     }
   };
 
-  if (loading) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  const handleVisibilityChange = useCallback(() => {
+    if (document.visibilityState === "visible") {
+      fetchMessages();
+    }
+  }, [fetchMessages]);
+
+  useEffect(() => {
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [handleVisibilityChange]);
+
+  if (!session?.user?.email) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
+        <p>Please sign in to view this chat.</p>
+      </div>
+    );
   }
 
-  if (error) {
-    return <div className="flex items-center justify-center min-h-screen text-red-500">{error}</div>;
-  }
+  const userEmail = session.user.email;
+
+  const formatMessageTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-900 text-white">
-      {/* Header with back button */}
-      <div className="p-4 border-b border-gray-700 flex items-center">
-        <button
-          onClick={() => router.push("/dashboard")}
-          className="flex items-center gap-2 px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700 transition-colors"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-          >
-            <path
-              fillRule="evenodd"
-              d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z"
-              clipRule="evenodd"
-            />
-          </svg>
-          Back to Dashboard
-        </button>
-      </div>
-
-      <div className="flex-1 overflow-y-auto p-4">
-        {messages.map((message) => (
-          <div
-            key={message._id}
-            className={`mb-4 ${
-              message.sender === session?.user?.email
-                ? "text-right"
-                : "text-left"
-            }`}
-          >
-            <div
-              className={`inline-block p-3 rounded-lg ${
-                message.sender === session?.user?.email
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-700 text-white"
-              }`}
+    <div className="min-h-screen bg-gray-900 text-white">
+      <div className="max-w-4xl mx-auto h-screen flex flex-col">
+        {/* Header */}
+        <div className="bg-gray-800 p-4 flex justify-between items-center">
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={() => router.push("/dashboard")}
+              className="text-gray-400 hover:text-white"
             >
-              {message.content}
-            </div>
+              ← Back
+            </button>
+            <h1 className="text-xl font-semibold">
+              {otherParticipant?.name || "Chat"}
+            </h1>
           </div>
-        ))}
-        <div ref={messagesEndRef} />
-      </div>
-      <form onSubmit={sendMessage} className="p-4 border-t border-gray-700">
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Type a message..."
-            className="flex-1 p-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <button
-            type="submit"
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-          >
-            Send
-          </button>
         </div>
-      </form>
+
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4" ref={messagesEndRef}>
+          {loading ? (
+            <div className="flex justify-center items-center h-full">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+            </div>
+          ) : error ? (
+            <div className="text-red-500 text-center">{error}</div>
+          ) : (
+            messages.map((message) => (
+              <div
+                key={message._id}
+                className={`flex ${
+                  message.senderEmail === session?.user?.email
+                    ? "justify-end"
+                    : "justify-start"
+                }`}
+              >
+                <div
+                  className={`max-w-[70%] rounded-lg p-3 ${
+                    message.senderEmail === session?.user?.email
+                      ? "bg-blue-600"
+                      : "bg-gray-700"
+                  }`}
+                >
+                  <p className="text-white">{message.content}</p>
+                  <p className="text-xs text-gray-300 mt-1">
+                    {formatMessageTime(message.createdAt)}
+                  </p>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Message Input */}
+        <div className="bg-gray-800 p-4">
+          <form onSubmit={handleSubmit} className="flex space-x-4">
+            <input
+              type="text"
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              placeholder="Type a message..."
+              className="flex-1 bg-gray-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <button
+              type="submit"
+              disabled={!newMessage.trim() || sending}
+              className={`px-4 py-2 rounded-lg ${
+                !newMessage.trim() || sending
+                  ? "bg-gray-600 cursor-not-allowed"
+                  : "bg-blue-500 hover:bg-blue-600"
+              } text-white transition-colors`}
+            >
+              {sending ? (
+                <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
+              ) : (
+                "Send"
+              )}
+            </button>
+          </form>
+        </div>
+      </div>
     </div>
   );
 } 

@@ -1,40 +1,33 @@
-import { MongoClient } from "mongodb";
+import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "../auth/[...nextauth]/route";
-
-const client = new MongoClient(process.env.MONGODB_URI!);
+import { authOptions } from "@/lib/auth";
+import { connectToDatabase } from "@/lib/mongo";
+import { Session } from "next-auth";
 
 export async function GET() {
     try {
-        const session = await getServerSession(authOptions);
+        const session = await getServerSession(authOptions) as Session & { user: { email: string } };
         
         if (!session?.user?.email) {
-            return new Response("Unauthorized", { status: 401 });
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        await client.connect();
-        const db = client.db("NexText");
-        
+        const { db } = await connectToDatabase();
         const user = await db.collection("users").findOne(
             { email: session.user.email },
-            { projection: { shortCode: 1, name: 1 } }
+            { projection: { shortCode: 1, name: 1, email: 1 } }
         );
 
         if (!user) {
-            return new Response("User not found", { status: 404 });
+            return NextResponse.json({ error: "User not found" }, { status: 404 });
         }
 
-        return new Response(JSON.stringify({
-            shortCode: user.shortCode,
-            name: user.name
-        }), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' }
-        });
+        return NextResponse.json(user);
     } catch (error) {
         console.error("Error fetching user details:", error);
-        return new Response("Internal Server Error", { status: 500 });
-    } finally {
-        await client.close();
+        return NextResponse.json(
+            { error: "Failed to fetch user details" },
+            { status: 500 }
+        );
     }
 } 

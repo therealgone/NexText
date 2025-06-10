@@ -1,13 +1,12 @@
-// app/login/page.tsx
 "use client";
 
-import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import { useState, useCallback, useRef } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-export default function LoginPage() {
+export default function SignUpPage() {
   const router = useRouter();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -22,25 +21,31 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const result = await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password }),
       });
 
-      if (result?.error) {
-        setError("Invalid email or password");
-        return;
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to sign up");
       }
 
-      router.push("/dashboard");
+      router.push("/login?registered=true");
     } catch (err) {
-      setError("An error occurred. Please try again.");
-      console.error("Login error:", err);
+      setError(err instanceof Error ? err.message : "An error occurred. Please try again.");
+      console.error("Signup error:", err);
     } finally {
       setLoading(false);
     }
-  }, [email, password, router, loading]);
+  }, [name, email, password, router, loading]);
+
+  const handleNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setName(e.target.value);
+    setError(null);
+  }, []);
 
   const handleEmailChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setEmail(e.target.value);
@@ -56,8 +61,8 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">Welcome Back</h1>
-          <p className="text-gray-400">Sign in to your account</p>
+          <h1 className="text-3xl font-bold mb-2">Create Account</h1>
+          <p className="text-gray-400">Join NexText today</p>
         </div>
 
         <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
@@ -66,6 +71,21 @@ export default function LoginPage() {
               {error}
             </div>
           )}
+
+          <div>
+            <label htmlFor="name" className="block text-sm font-medium mb-2">
+              Name
+            </label>
+            <input
+              id="name"
+              type="text"
+              value={name}
+              onChange={handleNameChange}
+              required
+              className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter your name"
+            />
+          </div>
 
           <div>
             <label htmlFor="email" className="block text-sm font-medium mb-2">
@@ -92,6 +112,7 @@ export default function LoginPage() {
               value={password}
               onChange={handlePasswordChange}
               required
+              minLength={6}
               className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter your password"
             />
@@ -104,17 +125,17 @@ export default function LoginPage() {
               loading ? "opacity-50 cursor-not-allowed" : "hover:bg-blue-600"
             }`}
           >
-            {loading ? "Signing in..." : "Sign In"}
+            {loading ? "Creating account..." : "Sign Up"}
           </button>
         </form>
 
         <p className="mt-6 text-center text-gray-400">
-          Don't have an account?{" "}
-          <Link href="/signup" className="text-blue-500 hover:text-blue-400">
-            Sign up
+          Already have an account?{" "}
+          <Link href="/login" className="text-blue-500 hover:text-blue-400">
+            Sign in
           </Link>
         </p>
       </div>
     </div>
   );
-}
+} 

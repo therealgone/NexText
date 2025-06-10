@@ -3,35 +3,44 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import LogoutButton from "@/components/LogoutButton";
+import Link from "next/link";
 
-interface UserDetails {
-  shortCode: string;
+interface Participant {
   name: string;
+  email: string;
+  shortCode: string;
+}
+
+interface Message {
+  content: string;
+  createdAt: string;
+  senderEmail: string;
 }
 
 interface Conversation {
-  id: string;
-  otherParticipant: {
-    email: string;
-    userId: string;
-  };
-  latestMessage: {
-    content: string;
-    createdAt: string;
-  } | null;
-  updatedAt: string;
+  _id: string;
+  participants: Participant[];
+  lastMessage: Message | null;
 }
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [friendCode, setFriendCode] = useState("");
-  
+  const [notifications, setNotifications] = useState<Record<string, boolean>>({});
+  const [lastMessageTimestamps, setLastMessageTimestamps] = useState<Record<string, string>>({});
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const isPageVisible = useRef(true);
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastFetchTime = useRef<number>(0);
+  const fetchInProgress = useRef<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [userShortCode, setUserShortCode] = useState<string>("");
+
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login");
@@ -39,35 +48,122 @@ export default function DashboardPage() {
   }, [status, router]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [userResponse, conversationsResponse] = await Promise.all([
-          fetch("/api/user"),
-          fetch("/api/conversations")
-        ]);
-
-        if (userResponse.ok) {
-          const userData = await userResponse.json();
-          setUserDetails(userData);
-        }
-
-        if (conversationsResponse.ok) {
-          const conversationsData = await conversationsResponse.json();
-          setConversations(conversationsData);
-        }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setLoading(false);
+    // Create audio element for notification sound
+    audioRef.current = new Audio('/notification.mp3');
+    
+    // Handle page visibility
+    const handleVisibilityChange = () => {
+      isPageVisible.current = document.visibilityState === 'visible';
+      if (isPageVisible.current) {
+        // Immediately fetch new data when page becomes visible
+        fetchData();
+        startPolling();
+      } else {
+        stopPolling();
       }
     };
 
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      stopPolling();
+    };
+  }, []);
+
+  const stopPolling = useCallback(() => {
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+      pollIntervalRef.current = null;
+    }
+  }, []);
+
+  const startPolling = useCallback(() => {
+    stopPolling(); // Clear any existing interval
+    pollIntervalRef.current = setInterval(fetchData, 2000); // Poll every 2 seconds
+  }, [stopPolling]);
+
+  const fetchUserDetails = useCallback(async () => {
+    try {
+      const response = await fetch("/api/user");
+      if (!response.ok) throw new Error("Failed to fetch user details");
+      const data = await response.json();
+      if (data.shortCode) {
+        setUserShortCode(data.shortCode);
+      }
+    } catch (error) {
+      console.error("Error fetching user details:", error);
+    }
+  }, []);
+
+  const fetchData = useCallback(async () => {
+    if (!session?.user?.email) return;
+
+    try {
+      const response = await fetch("/api/conversations", {
+        cache: 'no-store'
+      });
+      if (!response.ok) throw new Error("Failed to fetch conversations");
+      const data = await response.json();
+
+      // Update conversations and check for new messages
+      setConversations(prevConversations => {
+        const updatedConversations = data.map((conv: Conversation) => {
+          const prevConv = prevConversations.find(c => c._id === conv._id);
+          const lastMessage = conv.lastMessage;
+
+          if (lastMessage && isPageVisible.current) {
+            const prevTimestamp = lastMessageTimestamps[conv._id];
+            if (!prevTimestamp || new Date(lastMessage.createdAt) > new Date(prevTimestamp)) {
+              // Only show notification if it's a new message and not from the current user
+              if (lastMessage.senderEmail !== session.user.email) {
+                setNotifications(prev => ({ ...prev, [conv._id]: true }));
+                // Play notification sound
+                const audio = new Audio("/notification.mp3");
+                audio.play().catch(console.error);
+              }
+            }
+          }
+
+          return conv;
+        });
+
+        // Update timestamps
+        const newTimestamps = { ...lastMessageTimestamps };
+        updatedConversations.forEach((conv: Conversation) => {
+          if (conv.lastMessage) {
+            newTimestamps[conv._id] = conv.lastMessage.createdAt;
+          }
+        });
+        setLastMessageTimestamps(newTimestamps);
+
+        return updatedConversations;
+      });
+    } catch (err) {
+      console.error("Error fetching conversations:", err);
+      setError("Failed to load conversations");
+    } finally {
+      setLoading(false);
+    }
+  }, [session?.user?.email, lastMessageTimestamps]);
+
+  useEffect(() => {
     if (status === "authenticated") {
       fetchData();
+      fetchUserDetails();
+      startPolling();
+      return () => stopPolling();
     }
-  }, [status]);
+  }, [status, fetchData, fetchUserDetails, startPolling, stopPolling]);
 
-  async function startChat() {
+  const clearNotification = useCallback((conversationId: string) => {
+    setNotifications(prev => {
+      const updated = { ...prev };
+      delete updated[conversationId];
+      return updated;
+    });
+  }, []);
+
+  const startChat = useCallback(async () => {
     const res = await fetch("/api/start-chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -80,7 +176,52 @@ export default function DashboardPage() {
     } else {
       alert(data.error);
     }
-  }
+  }, [friendCode, router]);
+
+  const handleFriendCodeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setFriendCode(e.target.value);
+  }, []);
+
+  const handleConversationClick = useCallback((conversationId: string) => {
+    clearNotification(conversationId);
+    router.push(`/chat/${conversationId}`);
+  }, [clearNotification, router]);
+
+  const memoizedConversations = useMemo(() => (
+    conversations.map((conv) => {
+      const otherParticipant = conv.participants.find(
+        (p) => p.email !== session?.user?.email
+      );
+      const hasNotification = notifications[conv._id];
+
+      return (
+        <div
+          key={conv._id}
+          onClick={() => handleConversationClick(conv._id)}
+          className="bg-gray-800 rounded-lg p-4 cursor-pointer hover:bg-gray-700 transition-colors relative"
+        >
+          <div className="flex justify-between items-start">
+            <div>
+              <h2 className="font-medium text-lg text-white">
+                {otherParticipant?.name || "Unknown User"}
+              </h2>
+              {conv.lastMessage && (
+                <p className="text-gray-400 text-sm mt-1">
+                  {conv.lastMessage.senderEmail === session?.user?.email
+                    ? "You: "
+                    : `${otherParticipant?.name}: `}
+                  {conv.lastMessage.content}
+                </p>
+              )}
+            </div>
+            {hasNotification && (
+              <div className="absolute top-4 right-4 w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+            )}
+          </div>
+        </div>
+      );
+    })
+  ), [conversations, notifications, handleConversationClick, session?.user?.email]);
 
   if (status === "loading" || loading) {
     return <div className="text-white">Loading...</div>;
@@ -92,10 +233,10 @@ export default function DashboardPage() {
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-4">Welcome to NexText</h1>
           <p className="text-lg mb-2">Logged in as: {session?.user?.email}</p>
-          {userDetails && (
+          {userShortCode && (
             <div className="mt-4 p-4 bg-gray-800 rounded-lg">
-              <p className="text-lg mb-2">Your Short Code: <span className="font-mono bg-gray-700 px-2 py-1 rounded">{userDetails.shortCode}</span></p>
-              <p className="text-sm text-gray-400">Use this code to add friends</p>
+              <p className="text-lg mb-2">Your Short Code: <span className="font-mono bg-gray-700 px-2 py-1 rounded">{userShortCode}</span></p>
+              <p className="text-sm text-gray-400">Share this code with friends to start chatting</p>
             </div>
           )}
         </div>
@@ -108,20 +249,7 @@ export default function DashboardPage() {
               <p className="text-gray-400">No conversations yet. Start a new chat!</p>
             ) : (
               <div className="space-y-2">
-                {conversations.map((conv) => (
-                  <button
-                    key={conv.id}
-                    onClick={() => router.push(`/chat/${conv.id}`)}
-                    className="w-full text-left p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors"
-                  >
-                    <div className="font-medium">{conv.otherParticipant.email}</div>
-                    {conv.latestMessage && (
-                      <div className="text-sm text-gray-400 truncate">
-                        {conv.latestMessage.content}
-                      </div>
-                    )}
-                  </button>
-                ))}
+                {memoizedConversations}
               </div>
             )}
           </div>
@@ -134,7 +262,7 @@ export default function DashboardPage() {
                 type="text"
                 placeholder="Enter friend's code"
                 value={friendCode}
-                onChange={(e) => setFriendCode(e.target.value)}
+                onChange={handleFriendCodeChange}
                 className="px-4 py-2 border rounded-lg bg-gray-700 text-white placeholder-gray-400"
               />
               <button
