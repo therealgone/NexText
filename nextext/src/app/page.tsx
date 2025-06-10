@@ -1,9 +1,44 @@
 import Image from "next/image";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
+  const [friendCode, setFriendCode] = useState("");
+  const router = useRouter();
+
+  async function startChat() {
+    const res = await fetch("/api/start-chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ shortCode: friendCode }),
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      router.push(`/chat/${data.conversationId}`);
+    } else {
+      alert(data.error);
+    }
+  }
+
   return (
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
       <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
+        <div className="flex flex-col gap-4 items-center">
+          <input
+            type="text"
+            placeholder="Enter friend's code"
+            value={friendCode}
+            onChange={(e) => setFriendCode(e.target.value)}
+            className="px-4 py-2 border rounded-lg"
+          />
+          <button
+            onClick={startChat}
+            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+          >
+            Start Chat
+          </button>
+        </div>
         <Image
           className="dark:invert"
           src="/next.svg"

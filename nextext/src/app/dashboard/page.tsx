@@ -16,7 +16,8 @@ export default function DashboardPage() {
   const router = useRouter();
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [loading, setLoading] = useState(true);
-
+  const [friendCode, setFriendCode] = useState("");
+  
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login");
@@ -43,6 +44,21 @@ export default function DashboardPage() {
     }
   }, [status]);
 
+  async function startChat() {
+    const res = await fetch("/api/start-chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ shortCode: friendCode }),
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      router.push(`/chat/${data.conversationId}`);
+    } else {
+      alert(data.error);
+    }
+  }
+
   if (status === "loading" || loading) {
     return <div className="text-white">Loading...</div>;
   }
@@ -55,9 +71,28 @@ export default function DashboardPage() {
         {userDetails && (
           <div className="mt-4 p-4 bg-gray-800 rounded-lg">
             <p className="text-lg mb-2">Your Short Code: <span className="font-mono bg-gray-700 px-2 py-1 rounded">{userDetails.shortCode}</span></p>
-            <p className="text-sm text-gray-400">Use this code to log in quickly</p>
+            <p className="text-sm text-gray-400">Use this code to add friends</p>
           </div>
         )}
+
+        <div className="mt-8 p-4 bg-gray-800 rounded-lg">
+          <h2 className="text-xl font-semibold mb-4">Start a New Chat</h2>
+          <div className="flex flex-col gap-4 items-center">
+            <input
+              type="text"
+              placeholder="Enter friend's code"
+              value={friendCode}
+              onChange={(e) => setFriendCode(e.target.value)}
+              className="px-4 py-2 border rounded-lg bg-gray-700 text-white placeholder-gray-400"
+            />
+            <button
+              onClick={startChat}
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+            >
+              Start Chat
+            </button>
+          </div>
+        </div>
       </div>
       <LogoutButton />
     </div>
