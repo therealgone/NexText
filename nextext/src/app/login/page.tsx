@@ -5,6 +5,17 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState, useCallback, useRef } from "react";
 import Link from "next/link";
+import { Outfit, Space_Grotesk } from 'next/font/google';
+
+const outfit = Outfit({ 
+  subsets: ['latin'],
+  variable: '--font-outfit',
+});
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ['latin'],
+  variable: '--font-space-grotesk',
+});
 
 export default function LoginPage() {
   const router = useRouter();
@@ -53,23 +64,24 @@ export default function LoginPage() {
   }, []);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white p-4">
+    <div className="min-h-screen flex items-center justify-center text-white bg-gradient-to-t from-black to-zinc-800 ${outfit.variable} ${spaceGrotesk.variable} font-outfit`}">
       <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">Welcome Back</h1>
-          <p className="text-gray-400">Sign in to your account</p>
+        <div className=" p-5 bg-gradient-to-t from-black to-zinc-800 rounded-2xl">
+          <div className="text-center mb-9">
+          <h1 className="text-5xl mt-3 font-extrabold  text-shadow-[0_0_10px_white] tracking-wide mb-5 ">Welcome Back</h1>
+          <p className="text-gray-400 mt-5 text-2xl text-shadow-[0_0_10px_gray] ">Sign in to your account</p>
         </div>
-
+        
         <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
           {error && (
-            <div className="p-3 bg-red-500/10 border border-red-500 rounded-lg text-red-500 text-sm">
+            <div className="p-3 bg-red-500/10 border border-red-500 rounded-lg text-red-500 text-center text-sm">
               {error}
             </div>
           )}
 
           <div>
             <label htmlFor="email" className="block text-sm font-medium mb-2">
-              Email
+              
             </label>
             <input
               id="email"
@@ -77,14 +89,14 @@ export default function LoginPage() {
               value={email}
               onChange={handleEmailChange}
               required
-              className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter your email"
+              className="w-full mt-5 px-4 py-2 rounded bg-zinc-800  text-white outline-none focus:ring-2 focus:ring-white focus:shadow-[0_0_20px_white] placeholder:text-white"
+              placeholder="Email"
             />
           </div>
 
           <div>
             <label htmlFor="password" className="block text-sm font-medium mb-2">
-              Password
+              
             </label>
             <input
               id="password"
@@ -92,15 +104,15 @@ export default function LoginPage() {
               value={password}
               onChange={handlePasswordChange}
               required
-              className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter your password"
+              className="w-full mt-5 px-4 py-2 rounded bg-zinc-800   text-white  focus:outline-none focus:ring-2 focus:ring-white focus:shadow-[0_0_20px_white] placeholder:text-white"
+              placeholder="Password"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className={`w-full py-2 px-4 rounded-lg bg-blue-500 text-white font-medium transition-colors ${
+            className={`w-full py-2 px-4  bg-zinc-800 rounded-2xl font-extrabold text-white text-shadow-[0_0_10px_white] hover:bg-white hover:scale-[1.05] hover:text-black hover:text-shadow-[0_0_30px_black] transition-colors mt-5 ${
               loading ? "opacity-50 cursor-not-allowed" : "hover:bg-blue-600"
             }`}
           >
@@ -108,12 +120,14 @@ export default function LoginPage() {
           </button>
         </form>
 
+
         <p className="mt-6 text-center text-gray-400">
           Don't have an account?{" "}
-          <Link href="/sign-up" className="text-blue-500 hover:text-blue-400">
+          <Link href="/sign-up" className="text-white font-extrabold text-shadow-[0_0_10px_white] hover:scale-[1.04]">
             Sign up
           </Link>
         </p>
+</div>
       </div>
     </div>
   );

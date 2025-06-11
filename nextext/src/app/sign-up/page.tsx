@@ -45,18 +45,20 @@ export default function SignupPage() {
 
   return (
     <div className={`bg-gradient-to-t from-black to-zinc-800 text-white min-h-screen flex items-center justify-center ${outfit.variable} ${spaceGrotesk.variable} font-outfit`}>
+      
       <form
+       
         onSubmit={handleSubmit}
         className="bg-gradient-to-t from-black/10 to-zinc-800  p-8 rounded-2xl  w-full max-w-md space-y-10  "
       >
-        <h2 className="text-2xl font-bold text-center text-shadow-[0_0_15px_white] ">Create your NexText account</h2>
+        <h2 className="text-2xl font-bold text-center text-shadow-[0_0_15px_white] ">Create your account</h2>
 
         <input
           type="text"
           placeholder="Name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full p-3 rounded bg-zinc-700 focus:outline-none placeholder:text-white"
+          className="w-full p-3 rounded bg-zinc-700 focus:outline-none placeholder:text-white focus:ring-2 focus:ring-white focus:shadow-[0_0_20px_white]"
           required
         />
 
@@ -65,7 +67,7 @@ export default function SignupPage() {
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full p-3 rounded bg-zinc-700 focus:outline-none placeholder:text-white"
+          className="w-full p-3 rounded bg-zinc-700 focus:outline-none placeholder:text-white focus:ring-2 focus:ring-white focus:shadow-[0_0_20px_white]"
           required
         />
 
@@ -74,20 +76,20 @@ export default function SignupPage() {
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full p-3 rounded bg-zinc-700 focus:outline-none  placeholder:text-white"
+          className="w-full p-3 rounded bg-zinc-700 focus:outline-none  placeholder:text-white focus:ring-2 focus:ring-white focus:shadow-[0_0_20px_white]"
           required
         />
 
         <button
           type="submit"
-          className="w-full p-3 bg-zinc-800 rounded-2xl font-extrabold text-white text-shadow-[0_0_10px_white] hover:bg-white hover:scale-[1.05] hover:text-black"
+          className="w-full p-3 bg-zinc-800 rounded-2xl font-extrabold text-white text-shadow-[0_0_10px_white] hover:bg-white hover:scale-[1.05] hover:text-black hover:text-shadow-[0_0_30px_black]"
         >
           Sign Up
         </button>
 
-        <p className="text-sm text-gray-400 text-center">
+        <p className=" text-gray-400 text-center">
           Already have an account?{" "}
-          <a href="/login" className="text-white font-extrabold text-shadow-[0_0_10px_white] hover:scale-[1.04]">
+          <a href="/login" className="text-white font-extrabold  text-shadow-[0_0_10px_white] hover:scale-[1.04]">
             Log in
           </a>
         </p>

@@ -8,3 +8,16 @@
 body {
   font-family: var(--font-body);
 }
+
+@keyframes ringGlow {
+  0%, 100% {
+    border-color: black;
+  }
+  50% {
+    border-color: white;
+  }
+}
+
+
+/* To use the animation, add this to a selector: */
+/* animation: ringGlow 1.5s ease-in-out infinite; */
