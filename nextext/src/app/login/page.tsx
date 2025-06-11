@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import { Outfit, Space_Grotesk } from 'next/font/google';
+import {motion} from "motion/react";
 
 const outfit = Outfit({ 
   subsets: ['latin'],
@@ -64,12 +65,25 @@ export default function LoginPage() {
   }, []);
 
   return (
-    <div className="min-h-screen flex items-center justify-center text-white bg-gradient-to-t from-black to-zinc-800 ${outfit.variable} ${spaceGrotesk.variable} font-outfit`}">
+    <div className={`bg-gradient-to-t from-black to-zinc-800 text-white min-h-screen flex items-center justify-center ${outfit.variable} ${spaceGrotesk.variable} font-outfit`}>
       <div className="w-full max-w-md">
+      <motion.div 
+      initial={{opacity:0,y:90}}
+      animate={{opacity:1,y:0}}
+      transition={{duration:0.5, ease:"easeInOut"}}
+          >
         <div className=" p-5 bg-gradient-to-t from-black to-zinc-800 rounded-2xl">
           <div className="text-center mb-9">
+          <motion.div       initial={{opacity:0,y:90}}
+      animate={{opacity:1,y:0}}
+      transition={{duration:0.7, ease:"easeInOut"}}>
           <h1 className="text-5xl mt-3 font-extrabold  text-shadow-[0_0_10px_white] tracking-wide mb-5 ">Welcome Back</h1>
+          </motion.div>
+          <motion.div       initial={{opacity:0,y:90}}
+      animate={{opacity:1,y:0}}
+      transition={{duration:0.8, ease:"easeInOut"}}>
           <p className="text-gray-400 mt-5 text-2xl text-shadow-[0_0_10px_gray] ">Sign in to your account</p>
+          </motion.div>
         </div>
         
         <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
@@ -78,7 +92,9 @@ export default function LoginPage() {
               {error}
             </div>
           )}
-
+        <motion.div  initial={{opacity:0,y:90}}
+      animate={{opacity:1,y:0}}
+      transition={{duration:1, ease:"easeInOut"}}>
           <div>
             <label htmlFor="email" className="block text-sm font-medium mb-2">
               
@@ -93,11 +109,16 @@ export default function LoginPage() {
               placeholder="Email"
             />
           </div>
-
+        </motion.div>
+         <motion.div  initial={{opacity:0,y:90}}
+      animate={{opacity:1,y:0}}
+      transition={{duration:1.2, ease:"easeInOut"}}>
           <div>
+         
             <label htmlFor="password" className="block text-sm font-medium mb-2">
               
             </label>
+         
             <input
               id="password"
               type="password"
@@ -108,7 +129,10 @@ export default function LoginPage() {
               placeholder="Password"
             />
           </div>
-
+           </motion.div>
+          <motion.div  initial={{opacity:0,y:90}}
+      animate={{opacity:1,y:0}}
+      transition={{duration:1.4, ease:"easeInOut"}}>
           <button
             type="submit"
             disabled={loading}
@@ -118,16 +142,21 @@ export default function LoginPage() {
           >
             {loading ? "Signing in..." : "Sign In"}
           </button>
+          </motion.div>
         </form>
 
-
+        <motion.div  initial={{opacity:0,y:90}}
+      animate={{opacity:1,y:0}}
+      transition={{duration:1.6, ease:"easeInOut"}}>
         <p className="mt-6 text-center text-gray-400">
           Don't have an account?{" "}
           <Link href="/sign-up" className="text-white font-extrabold text-shadow-[0_0_10px_white] hover:scale-[1.04]">
             Sign up
           </Link>
         </p>
+        </motion.div>
 </div>
+</motion.div>
       </div>
     </div>
   );
