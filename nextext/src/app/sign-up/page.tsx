@@ -1,6 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import { Outfit, Space_Grotesk } from 'next/font/google';
+
+const outfit = Outfit({ 
+  subsets: ['latin'],
+  variable: '--font-outfit',
+});
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ['latin'],
+  variable: '--font-space-grotesk',
+});
+
 
 export default function SignupPage() {
   const [name, setName] = useState("");
@@ -32,19 +44,19 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
+    <div className={`bg-gradient-to-t from-black to-zinc-800 text-white min-h-screen flex items-center justify-center ${outfit.variable} ${spaceGrotesk.variable} font-outfit`}>
       <form
         onSubmit={handleSubmit}
-        className="bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-md space-y-6"
+        className="bg-gradient-to-t from-black/10 to-zinc-800  p-8 rounded-2xl  w-full max-w-md space-y-10  "
       >
-        <h2 className="text-2xl font-bold">Create your NexText account</h2>
+        <h2 className="text-2xl font-bold text-center text-shadow-[0_0_15px_white] ">Create your NexText account</h2>
 
         <input
           type="text"
           placeholder="Name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full p-3 rounded bg-gray-700 focus:outline-none"
+          className="w-full p-3 rounded bg-zinc-700 focus:outline-none placeholder:text-white"
           required
         />
 
@@ -53,7 +65,7 @@ export default function SignupPage() {
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full p-3 rounded bg-gray-700 focus:outline-none"
+          className="w-full p-3 rounded bg-zinc-700 focus:outline-none placeholder:text-white"
           required
         />
 
@@ -62,20 +74,20 @@ export default function SignupPage() {
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full p-3 rounded bg-gray-700 focus:outline-none"
+          className="w-full p-3 rounded bg-zinc-700 focus:outline-none  placeholder:text-white"
           required
         />
 
         <button
           type="submit"
-          className="w-full p-3 bg-green-600 hover:bg-green-700 rounded text-white font-semibold"
+          className="w-full p-3 bg-zinc-800 rounded-2xl font-extrabold text-white text-shadow-[0_0_10px_white] hover:bg-white hover:scale-[1.05] hover:text-black"
         >
           Sign Up
         </button>
 
         <p className="text-sm text-gray-400 text-center">
           Already have an account?{" "}
-          <a href="/login" className="text-blue-400">
+          <a href="/login" className="text-white font-extrabold text-shadow-[0_0_10px_white] hover:scale-[1.04]">
             Log in
           </a>
         </p>
