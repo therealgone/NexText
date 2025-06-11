@@ -1,5 +1,9 @@
 {
   "devDependencies": {
     "@types/mongodb": "^4.0.6"
+  },
+  "dependencies": {
+    "@types/crypto-js": "^4.2.2",
+    "crypto-js": "^4.2.0"
   }
 }
