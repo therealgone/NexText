@@ -3,6 +3,10 @@
 NexText is a modern, real-time chat application built with Next.js, featuring a sleek UI with beautiful animations and a secure authentication system.
 
 ![NexText Logo](UI/Home.png)
+![NexText Logo](UI/login.png)
+![NexText Logo](UI/Sign-Up.png)
+![NexText Logo](UI/dashboard.png)
+![NexText Logo](UI/Chat.png)
 
 ## 🌟 Features
 
