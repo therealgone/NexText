@@ -35,7 +35,7 @@ export default function Home() {
             <a href="/sign-up">Sign-Up</a>
           </li>
           <li className=" mt-10 p-3 px-6 mx-20 rounded-2xl shadow-[0_0_10px_white]  bg-zinc-800   hover:scale-[1.08]   hover:bg-white hover:text-black transition ">
-            <a href="login">Login</a>
+            <a href="/login">Login</a>
           </li>
         </ul>
          </motion.div>

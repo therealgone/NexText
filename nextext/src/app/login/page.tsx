@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import { Outfit, Space_Grotesk } from 'next/font/google';
-import {motion} from "motion/react";
+import { motion } from "framer-motion";
 import Image from 'next/image';
 import logo from "./nt.png"
 
