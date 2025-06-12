@@ -6,7 +6,20 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import LogoutButton from "@/components/LogoutButton";
 import Link from "next/link";
+import { Outfit, Space_Grotesk } from 'next/font/google';
+import {motion} from "motion/react";
+import Image from 'next/image';
+import logo from "./nt.png"
 
+const outfit = Outfit({ 
+  subsets: ['latin'],
+  variable: '--font-outfit',
+});
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ['latin'],
+  variable: '--font-space-grotesk',
+});
 interface Participant {
   name: string;
   email: string;
@@ -194,32 +207,33 @@ export default function DashboardPage() {
       );
       const hasNotification = notifications[conv._id];
 
-      return (
-        <div
-          key={conv._id}
-          onClick={() => handleConversationClick(conv._id)}
-          className="bg-gray-800 rounded-lg p-4 cursor-pointer hover:bg-gray-700 transition-colors relative"
-        >
-          <div className="flex justify-between items-start">
-            <div>
-              <h2 className="font-medium text-lg text-white">
-                {otherParticipant?.name || "Unknown User"}
-              </h2>
-              {conv.lastMessage && (
-                <p className="text-gray-400 text-sm mt-1">
-                  {conv.lastMessage.senderEmail === session?.user?.email
-                    ? "You: "
-                    : `${otherParticipant?.name}: `}
-                  {conv.lastMessage.content}
-                </p>
-              )}
-            </div>
-            {hasNotification && (
-              <div className="absolute top-4 right-4 w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-            )}
-          </div>
-        </div>
-      );
+
+return (
+  <div
+    key={conv._id}
+    onClick={() => handleConversationClick(conv._id)}
+    className=" group bg-black rounded-lg p-4  hover:bg-white transition-colors relative"
+  >
+    <div className="flex justify-between items-start">
+      <div>
+        <h2 className="font-medium text-lg text-white group-hover:text-black">
+          {otherParticipant?.name || "Unknown User"}
+        </h2>
+        {conv.lastMessage && (
+          <p className="text-gray-400 text-sm mt-1 group-hover:text-black">
+            {conv.lastMessage.senderEmail === session?.user?.email
+              ? "You: "
+              : `${otherParticipant?.name}: `}
+            {conv.lastMessage.content}
+          </p>
+        )}
+      </div>
+      {hasNotification && (
+        <div className="absolute top-4 right-4 w-3 h-3 bg-white drop-shadow-[1px_2px_10px_white]  rounded-full  group-hover:bg-black  group-hover:drop-shadow-[0_0_10px_red]  animate-pulse"></div>
+      )}
+    </div>
+  </div>
+);
     })
   ), [conversations, notifications, handleConversationClick, session?.user?.email]);
 
@@ -228,14 +242,23 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-900 text-white p-4">
+    <div className={`min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-black to-zinc-800 text-white p-4 ${outfit.variable} ${spaceGrotesk.variable} font-outfit`}>
+      <h1 className="fixed top-15 text-5xl font-extrabold mb-4 text-shadow-[0_0_50px_white]">Welcome to NexText</h1>
+      <Image src={logo.src} alt="NexText Logo" className="w-30 fixed top-1 left-0" width={120} height={120} /> 
+       <div className="top-5 right-0 fixed p-5" >
+        
+
+      <LogoutButton></LogoutButton>
+      </div>
       <div className="w-full max-w-2xl">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-4">Welcome to NexText</h1>
-          <p className="text-lg mb-2">Logged in as: {session?.user?.email}</p>
+         
+          <p className="text-lg mb-2">Logged in as: {session?.user?.email}
+            
+          </p>
           {userShortCode && (
-            <div className="mt-4 p-4 bg-gray-800 rounded-lg">
-              <p className="text-lg mb-2">Your Short Code: <span className="font-mono bg-gray-700 px-2 py-1 rounded">{userShortCode}</span></p>
+            <div className="mt-4 p-4  bg-gradient-to-b from-zinc-800 to-zinc-600/40 rounded-lg">
+              <p className="text-lg mb-2">Your Short Code: <span className="font-mono  bg-white text-black px-2 py-1 rounded">{userShortCode}</span></p>
               <p className="text-sm text-gray-400">Share this code with friends to start chatting</p>
             </div>
           )}
@@ -243,19 +266,19 @@ export default function DashboardPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Existing Conversations */}
-          <div className="bg-gray-800 rounded-lg p-4">
+          <div className="  bg-gradient-to-b from-zinc-800 to-zinc-600/30 rounded-lg p-4 text-white">
             <h2 className="text-xl font-semibold mb-4">Your Conversations</h2>
             {conversations.length === 0 ? (
-              <p className="text-gray-400">No conversations yet. Start a new chat!</p>
+              <p className="text-white">No conversations yet. Start a new chat!</p>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-2 ">
                 {memoizedConversations}
               </div>
             )}
           </div>
 
           {/* Start New Chat */}
-          <div className="bg-gray-800 rounded-lg p-4">
+          <div className=" bg-gradient-to-b from-zinc-800 to-zinc-600/40 rounded-lg p-4">
             <h2 className="text-xl font-semibold mb-4">Start a New Chat</h2>
             <div className="flex flex-col gap-4">
               <input
@@ -263,11 +286,11 @@ export default function DashboardPage() {
                 placeholder="Enter friend's code"
                 value={friendCode}
                 onChange={handleFriendCodeChange}
-                className="px-4 py-2 border rounded-lg bg-gray-700 text-white placeholder-gray-400"
+                className="px-4 py-2  rounded-lg bg-zinc-700 text-white placeholder-gray-400  outline-none focus:ring-white focus:ring-2 focus:shadow-[0_0_20px_white] transition-colors"
               />
               <button
                 onClick={startChat}
-                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                className=" text-white mt-5   p-3  py-3 px-6 mx-5 rounded-2xl shadow-[0_0_10px_white]  bg-zinc-800   hover:scale-[1.08]   hover:bg-white hover:text-black transition font-extrabold"
               >
                 Start Chat
               </button>
@@ -276,7 +299,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="mt-8 text-center">
-          <LogoutButton />
+          
         </div>
       </div>
     </div>
