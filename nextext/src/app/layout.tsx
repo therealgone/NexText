@@ -17,18 +17,8 @@ export const metadata: Metadata = {
   title: "NexText - Secure Chat",
   description: "A secure and private chat application with real-time messaging",
   icons: {
-    icon: [
-      {
-        url: '/favicon.ico',
-        sizes: 'any',
-      },
-    ],
-    apple: [
-      {
-        url: '/favicon.ico',
-        sizes: 'any',
-      },
-    ],
+    icon: '/favicon.ico',
+    apple: '/favicon.ico',
   },
   manifest: '/manifest.json',
   themeColor: '#000000',
@@ -57,15 +47,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <head>
-        <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link rel="apple-touch-icon" href="/favicon.ico" />
-      </head>
       <body className="font-body">
         <Providers>{children}</Providers>
       </body>
