@@ -3,17 +3,7 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   images: {
-    domains: ['cdn.jsdelivr.net'],
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'cdn.jsdelivr.net',
-        pathname: '/**',
-      },
-    ],
-  },
-  experimental: {
-    serverActions: true,
+    domains: ['cdn.jsdelivr.net'], // Add any other image domains you're using
   },
   // Enable static optimization where possible
   poweredByHeader: false,

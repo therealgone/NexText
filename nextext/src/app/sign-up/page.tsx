@@ -32,8 +32,6 @@ export default function SignupPage() {
       body: JSON.stringify({ name, email, password }),
     });
 
-    const data = await res.json();
-
     if (res.ok) {
       setMessage("✅ Account created! Redirecting to login...");
       setName("");
@@ -43,7 +41,8 @@ export default function SignupPage() {
         window.location.href = "/login";
       }, 2000);
     } else {
-      setMessage("❌ " + (data.error || "Registration failed"));
+      const errorText = await res.text();
+      setMessage("❌ " + errorText);
     }
   };
 
