@@ -3,6 +3,20 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { Outfit, Space_Grotesk } from 'next/font/google';
+import { motion, Variants } from "motion/react";
+
+
+const outfit = Outfit({ 
+  subsets: ['latin'],
+  variable: '--font-outfit',
+});
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ['latin'],
+  variable: '--font-space-grotesk',
+});
+
 
 interface Message {
   _id: string;
@@ -140,28 +154,28 @@ export default function ChatPage({ params }: { params: { id: string } }) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      <div className="max-w-4xl mx-auto h-screen flex flex-col">
+    <div className="min-h-screen bg-gradient-to-b from-black to-zinc-800 text-white">
+      <div className="h-screen flex flex-col">
         {/* Header */}
-        <div className="bg-gray-800 p-4 flex justify-between items-center">
+        <div className="bg-zinc-800/50 p-4 flex justify-between items-center border-b border-white/10">
           <div className="flex items-center space-x-4">
             <button
               onClick={() => router.push("/dashboard")}
-              className="text-gray-400 hover:text-white"
+              className="text-white hover:text-black bg-zinc-800 p-2 rounded-xl shadow-[0_0_10px_white] hover:bg-white hover:scale-[1.08] transition font-bold right-0 fixed "
             >
               ← Back
             </button>
-            <h1 className="text-xl font-semibold">
+            <h1 className="text-xl font-semibold text-shadow-[0_0_10px_white]">
               {otherParticipant?.name || "Chat"}
             </h1>
           </div>
         </div>
 
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4" ref={messagesEndRef}>
+        {/* Messages Container */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {loading ? (
             <div className="flex justify-center items-center h-full">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white "></div>
             </div>
           ) : error ? (
             <div className="text-red-500 text-center">{error}</div>
@@ -176,11 +190,11 @@ export default function ChatPage({ params }: { params: { id: string } }) {
                 }`}
               >
                 <div
-                  className={`max-w-[70%] rounded-lg p-3 ${
+                  className={`max-w-[70%] rounded-2xl p-3 ${
                     message.senderEmail === session?.user?.email
-                      ? "bg-blue-600"
-                      : "bg-gray-700"
-                  }`}
+                      ? "bg-zinc-800 tracking-wider  hover:shadow-[0_0_20px_white] font-bold"
+                      : "bg-zinc-600 font-semibold tracking-wide hover:shadow-[0_0_20px_white] "
+                  } transition-all duration-300`}
                 >
                   <p className="text-white">{message.content}</p>
                   <p className="text-xs text-gray-300 mt-1">
@@ -190,26 +204,27 @@ export default function ChatPage({ params }: { params: { id: string } }) {
               </div>
             ))
           )}
+          <div ref={messagesEndRef} />
         </div>
 
         {/* Message Input */}
-        <div className="bg-gray-800 p-4">
+        <div className="p-4 bg-zinc-800/30 border-t border-white/10">
           <form onSubmit={handleSubmit} className="flex space-x-4">
             <input
               type="text"
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               placeholder="Type a message..."
-              className="flex-1 bg-gray-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 bg-zinc-700 text-white rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-white focus:shadow-[0_0_10px_white] placeholder:text-white/50"
             />
             <button
               type="submit"
               disabled={!newMessage.trim() || sending}
-              className={`px-4 py-2 rounded-lg ${
+              className={`px-6 py-3 rounded-2xl font-extrabold ${
                 !newMessage.trim() || sending
-                  ? "bg-gray-600 cursor-not-allowed"
-                  : "bg-blue-500 hover:bg-blue-600"
-              } text-white transition-colors`}
+                  ? "bg-zinc-700 cursor-not-allowed"
+                  : "bg-zinc-800 text-white shadow-[0_0_10px_white] hover:bg-white hover:text-black hover:scale-[1.08]"
+              } transition-all duration-300`}
             >
               {sending ? (
                 <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
