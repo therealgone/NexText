@@ -1,4 +1,3 @@
-// app/dashboard/page.tsx
 "use client";
 
 import { useSession } from "next-auth/react";
@@ -7,9 +6,9 @@ import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import LogoutButton from "@/components/LogoutButton";
 import Link from "next/link";
 import { Outfit, Space_Grotesk } from 'next/font/google';
-import {motion} from "motion/react";
+import { motion, Variants } from "motion/react";
 import Image from 'next/image';
-import logo from "./nt.png"
+import logo from "./nt.png";
 
 const outfit = Outfit({ 
   subsets: ['latin'],
@@ -20,6 +19,7 @@ const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
   variable: '--font-space-grotesk',
 });
+
 interface Participant {
   name: string;
   email: string;
@@ -36,6 +36,51 @@ interface Conversation {
   _id: string;
   participants: Participant[];
   lastMessage: Message | null;
+}
+
+function LoadingThreeDotsJumping() {
+  const dotVariants: Variants = {
+    jump: {
+      y: -30,
+      transition: {
+        duration: 0.8,
+        repeat: Infinity,
+        repeatType: "mirror",
+        ease: "easeInOut",
+      },
+    },
+  };
+
+  return (
+    <motion.div
+      animate="jump"
+      transition={{ staggerChildren: -0.2, staggerDirection: -1 }}
+      className="loading-container"
+      style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 10 }}
+    >
+      <motion.div className="dot" variants={dotVariants} />
+      <motion.div className="dot" variants={dotVariants} />
+      <motion.div className="dot" variants={dotVariants} />
+      <StyleSheet />
+    </motion.div>
+  );
+}
+
+function StyleSheet() {
+  return (
+    <style>{`
+      .loading-container {
+        height: 100vh; /* fill screen vertically */
+      }
+      .dot {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background-color: #ff0088;
+        will-change: transform;
+      }
+    `}</style>
+  );
 }
 
 export default function DashboardPage() {
@@ -61,14 +106,11 @@ export default function DashboardPage() {
   }, [status, router]);
 
   useEffect(() => {
-    // Create audio element for notification sound
     audioRef.current = new Audio('/notification.mp3');
-    
-    // Handle page visibility
+
     const handleVisibilityChange = () => {
       isPageVisible.current = document.visibilityState === 'visible';
       if (isPageVisible.current) {
-        // Immediately fetch new data when page becomes visible
         fetchData();
         startPolling();
       } else {
@@ -91,8 +133,8 @@ export default function DashboardPage() {
   }, []);
 
   const startPolling = useCallback(() => {
-    stopPolling(); // Clear any existing interval
-    pollIntervalRef.current = setInterval(fetchData, 2000); // Poll every 2 seconds
+    stopPolling();
+    pollIntervalRef.current = setInterval(fetchData, 2000);
   }, [stopPolling]);
 
   const fetchUserDetails = useCallback(async () => {
@@ -118,19 +160,15 @@ export default function DashboardPage() {
       if (!response.ok) throw new Error("Failed to fetch conversations");
       const data = await response.json();
 
-      // Update conversations and check for new messages
       setConversations(prevConversations => {
         const updatedConversations = data.map((conv: Conversation) => {
-          const prevConv = prevConversations.find(c => c._id === conv._id);
           const lastMessage = conv.lastMessage;
 
           if (lastMessage && isPageVisible.current) {
             const prevTimestamp = lastMessageTimestamps[conv._id];
             if (!prevTimestamp || new Date(lastMessage.createdAt) > new Date(prevTimestamp)) {
-              // Only show notification if it's a new message and not from the current user
               if (lastMessage.senderEmail !== session.user.email) {
                 setNotifications(prev => ({ ...prev, [conv._id]: true }));
-                // Play notification sound
                 const audio = new Audio("/notification.mp3");
                 audio.play().catch(console.error);
               }
@@ -140,7 +178,6 @@ export default function DashboardPage() {
           return conv;
         });
 
-        // Update timestamps
         const newTimestamps = { ...lastMessageTimestamps };
         updatedConversations.forEach((conv: Conversation) => {
           if (conv.lastMessage) {
@@ -207,58 +244,58 @@ export default function DashboardPage() {
       );
       const hasNotification = notifications[conv._id];
 
-
-return (
-  <div
-    key={conv._id}
-    onClick={() => handleConversationClick(conv._id)}
-    className=" group bg-black rounded-lg p-4  hover:bg-white transition-colors relative"
-  >
-    <div className="flex justify-between items-start">
-      <div>
-        <h2 className="font-medium text-lg text-white group-hover:text-black">
-          {otherParticipant?.name || "Unknown User"}
-        </h2>
-        {conv.lastMessage && (
-          <p className="text-gray-400 text-sm mt-1 group-hover:text-black">
-            {conv.lastMessage.senderEmail === session?.user?.email
-              ? "You: "
-              : `${otherParticipant?.name}: `}
-            {conv.lastMessage.content}
-          </p>
-        )}
-      </div>
-      {hasNotification && (
-        <div className="absolute top-4 right-4 w-3 h-3 bg-white drop-shadow-[1px_2px_10px_white]  rounded-full  group-hover:bg-black  group-hover:drop-shadow-[0_0_10px_red]  animate-pulse"></div>
-      )}
-    </div>
-  </div>
-);
+      return (
+        <div
+          key={conv._id}
+          onClick={() => handleConversationClick(conv._id)}
+          className="group bg-black rounded-lg p-4 hover:bg-white transition-colors relative"
+        >
+          <div className="flex justify-between items-start">
+            <div>
+              <h2 className="font-medium text-lg text-white group-hover:text-black">
+                {otherParticipant?.name || "Unknown User"}
+              </h2>
+              {conv.lastMessage && (
+                <p className="text-gray-400 text-sm mt-1 group-hover:text-black">
+                  {conv.lastMessage.senderEmail === session?.user?.email
+                    ? "You: "
+                    : `${otherParticipant?.name}: `}
+                  {conv.lastMessage.content}
+                </p>
+              )}
+            </div>
+            {hasNotification && (
+              <div className="absolute top-4 right-4 w-3 h-3 bg-white drop-shadow-[1px_2px_10px_white] rounded-full group-hover:bg-black group-hover:drop-shadow-[0_0_10px_red] animate-pulse"></div>
+            )}
+          </div>
+        </div>
+      );
     })
   ), [conversations, notifications, handleConversationClick, session?.user?.email]);
 
   if (status === "loading" || loading) {
-    return <div className="text-white">Loading...</div>;
+    return (
+      <div className={`min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-black to-zinc-800 text-white p-4 ${outfit.variable} ${spaceGrotesk.variable} font-outfit`}>
+        <LoadingThreeDotsJumping />
+      </div>
+    );
   }
 
   return (
     <div className={`min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-black to-zinc-800 text-white p-4 ${outfit.variable} ${spaceGrotesk.variable} font-outfit`}>
       <h1 className="fixed top-15 text-5xl font-extrabold mb-4 text-shadow-[0_0_50px_white]">Welcome to NexText</h1>
-      <Image src={logo.src} alt="NexText Logo" className="w-30 fixed top-1 left-0" width={120} height={120} /> 
-       <div className="top-5 right-0 fixed p-5" >
-        
-
-      <LogoutButton></LogoutButton>
+      <Image src={logo.src} alt="NexText Logo" className="w-30 fixed top-1 left-0" width={120} height={120} />
+      <div className="top-5 right-0 fixed p-5">
+        <LogoutButton />
       </div>
       <div className="w-full max-w-2xl">
         <div className="text-center mb-8">
-         
-          <p className="text-lg mb-2">Logged in as: {session?.user?.email}
-            
-          </p>
+          <p className="text-lg mb-2">Logged in as: {session?.user?.email}</p>
           {userShortCode && (
-            <div className="mt-4 p-4  bg-gradient-to-b from-zinc-800 to-zinc-600/40 rounded-lg">
-              <p className="text-lg mb-2">Your Short Code: <span className="font-mono  bg-white text-black px-2 py-1 rounded">{userShortCode}</span></p>
+            <div className="mt-4 p-4 bg-gradient-to-b from-zinc-800 to-zinc-600/40 rounded-lg">
+              <p className="text-lg mb-2">
+                Your Short Code: <span className="font-mono bg-white text-black px-2 py-1 rounded">{userShortCode}</span>
+              </p>
               <p className="text-sm text-gray-400">Share this code with friends to start chatting</p>
             </div>
           )}
@@ -266,7 +303,7 @@ return (
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Existing Conversations */}
-          <div className="  bg-gradient-to-b from-zinc-800 to-zinc-600/30 rounded-lg p-4 text-white">
+          <div className="bg-gradient-to-b from-zinc-800 to-zinc-600/30 rounded-lg p-4 text-white">
             <h2 className="text-xl font-semibold mb-4">Your Conversations</h2>
             {conversations.length === 0 ? (
               <p className="text-white">No conversations yet. Start a new chat!</p>
@@ -278,7 +315,7 @@ return (
           </div>
 
           {/* Start New Chat */}
-          <div className=" bg-gradient-to-b from-zinc-800 to-zinc-600/40 rounded-lg p-4">
+          <div className="bg-gradient-to-b from-zinc-800 to-zinc-600/40 rounded-lg p-4">
             <h2 className="text-xl font-semibold mb-4">Start a New Chat</h2>
             <div className="flex flex-col gap-4">
               <input
@@ -286,11 +323,11 @@ return (
                 placeholder="Enter friend's code"
                 value={friendCode}
                 onChange={handleFriendCodeChange}
-                className="px-4 py-2  rounded-lg bg-zinc-700 text-white placeholder-gray-400  outline-none focus:ring-white focus:ring-2 focus:shadow-[0_0_20px_white] transition-colors"
+                className="px-4 py-2 rounded-lg bg-zinc-700 text-white placeholder-gray-400 outline-none focus:ring-white focus:ring-2 focus:shadow-[0_0_20px_white] transition-colors"
               />
               <button
                 onClick={startChat}
-                className=" text-white mt-5   p-3  py-3 px-6 mx-5 rounded-2xl shadow-[0_0_10px_white]  bg-zinc-800   hover:scale-[1.08]   hover:bg-white hover:text-black transition font-extrabold"
+                className="text-white mt-5 p-3 py-3 px-6 mx-5 rounded-2xl shadow-[0_0_10px_white] bg-zinc-800 hover:scale-[1.08] hover:bg-white hover:text-black transition font-extrabold"
               >
                 Start Chat
               </button>
@@ -298,9 +335,9 @@ return (
           </div>
         </div>
 
-        <div className="mt-8 text-center">
-          
-        </div>
+        {error && (
+          <div className="mt-4 p-3 bg-red-600 rounded">{error}</div>
+        )}
       </div>
     </div>
   );
